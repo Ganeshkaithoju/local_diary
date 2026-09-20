@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.MyDiary" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:statusBarColor">#121217</item>
+        <item name="android:navigationBarColor">#121217</item>
+        <item name="android:windowBackground">#121217</item>
+    </style>
+</resources>

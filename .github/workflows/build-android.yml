@@ -1,0 +1,95 @@
+name: Build Android App
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies & Build Frontend
+        run: |
+          bun install --frozen-lockfile
+          bun run build
+
+      - name: Copy Frontend Assets to Android
+        run: |
+          mkdir -p src-tauri/gen/android/app/src/main/assets
+          cp -r dist/* src-tauri/gen/android/app/src/main/assets/
+
+      - name: Decode Keystore (if secret present)
+        if: env.ANDROID_KEYSTORE_BASE64 != ''
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > src-tauri/gen/android/app/upload-key.jks
+          echo "KEYSTORE_PATH=upload-key.jks" >> $GITHUB_ENV
+          echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
+          echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> $GITHUB_ENV
+          echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> $GITHUB_ENV
+
+      - name: Build Android Debug APK
+        run: |
+          cd src-tauri/gen/android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Build Android Release APK and AAB
+        run: |
+          cd src-tauri/gen/android
+          ./gradlew assembleRelease
+          ./gradlew bundleRelease
+
+      - name: Prepare Named Android Release Artifacts
+        run: |
+          mkdir -p release-artifacts
+          # Copy release APK as LocalDiaryCore_1.1.0.apk
+          if [ -f src-tauri/gen/android/app/build/outputs/apk/release/app-release.apk ]; then
+            cp src-tauri/gen/android/app/build/outputs/apk/release/app-release.apk release-artifacts/LocalDiaryCore_1.1.0.apk
+          elif [ -f src-tauri/gen/android/app/build/outputs/apk/release/app-release-unsigned.apk ]; then
+            cp src-tauri/gen/android/app/build/outputs/apk/release/app-release-unsigned.apk release-artifacts/LocalDiaryCore_1.1.0.apk
+          fi
+          # Copy release AAB
+          if [ -f src-tauri/gen/android/app/build/outputs/bundle/release/app-release.aab ]; then
+            cp src-tauri/gen/android/app/build/outputs/bundle/release/app-release.aab release-artifacts/app-release.aab
+          fi
+
+      - name: Upload APK & AAB Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-release-artifacts
+          path: release-artifacts/*
+          retention-days: 14
+
+      - name: Attach Android Artifacts to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release-artifacts/LocalDiaryCore_1.1.0.apk
+            release-artifacts/app-release.aab
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

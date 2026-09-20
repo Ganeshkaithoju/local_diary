@@ -1,0 +1,60 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Tauri/Rust generated output
+target/
+src-tauri/target/
+
+# Environment and secrets
+.env
+.env.*
+*.env
+*.local
+*.keys
+
+# Documentation / internal notes
+*.md
+!README.md
+!.env.example
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Coverage
+coverage/
+
+# Local caches
+.cache/
+# Generated/static export
+isolate/
+isolate/
+
+# Generated Android/Gradle files
+.gradle/
+src-tauri/gen/android/.gradle/
+
+# Release binaries
+*.apk
+*.aab
+
+# Generated Android build output
+/src-tauri/gen/android/app/src/main/assets/
+/src-tauri/gen/android/app/build/
+/src-tauri/gen/android/.gradle/

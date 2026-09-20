@@ -1,0 +1,503 @@
+/* DO NOT CHANGE */
+@import "tailwindcss";
+@import "tw-animate-css";
+@custom-variant dark (&:is(.dark *));
+
+/* DO NOT CHANGE */
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-paper: var(--paper);
+  --color-paper-edge: var(--paper-edge);
+}
+
+/* CHANGE VALUES FOR THEME — Local Diary Core: dark, technical, clean */
+:root {
+  --radius: 0.75rem;
+  --background: oklch(0.175 0.006 260);
+  --foreground: oklch(0.955 0.002 260);
+  --card: oklch(0.21 0.007 260);
+  --card-foreground: oklch(0.955 0.002 260);
+  --popover: oklch(0.21 0.007 260);
+  --popover-foreground: oklch(0.955 0.002 260);
+  --primary: oklch(0.85 0.13 85);
+  --primary-foreground: oklch(0.2 0.02 85);
+  --secondary: oklch(0.26 0.008 260);
+  --secondary-foreground: oklch(0.94 0.002 260);
+  --muted: oklch(0.26 0.008 260);
+  --muted-foreground: oklch(0.68 0.008 260);
+  --accent: oklch(0.27 0.01 260);
+  --accent-foreground: oklch(0.95 0.002 260);
+  --destructive: oklch(0.63 0.2 25);
+  --border: oklch(1 0 0 / 9%);
+  --input: oklch(1 0 0 / 12%);
+  --ring: oklch(0.85 0.13 85);
+  --chart-1: oklch(0.85 0.13 85);
+  --chart-2: oklch(0.72 0.12 195);
+  --chart-3: oklch(0.65 0.18 25);
+  --chart-4: oklch(0.7 0.14 150);
+  --chart-5: oklch(0.75 0.15 280);
+  --sidebar: oklch(0.21 0.007 260);
+  --sidebar-foreground: oklch(0.955 0.002 260);
+  --sidebar-primary: oklch(0.85 0.13 85);
+  --sidebar-primary-foreground: oklch(0.2 0.02 85);
+  --sidebar-accent: oklch(0.27 0.01 260);
+  --sidebar-accent-foreground: oklch(0.95 0.002 260);
+  --sidebar-border: oklch(1 0 0 / 9%);
+  --sidebar-ring: oklch(0.85 0.13 85);
+
+  /* Diary paper & ink — light paper stays for the book pages (print feel) */
+  --paper: oklch(0.985 0.004 95);
+  --paper-edge: oklch(0.93 0.006 95);
+  --ink: oklch(0.24 0.015 260);
+  --ink-soft: oklch(0.44 0.015 260);
+  --shadow-color: 260 50% 3%;
+  --font-mono:
+    ui-monospace, "SF Mono", "JetBrains Mono", "Fira Code", Menlo,
+    Consolas, monospace;
+}
+/* The app is dark by default; the .dark class simply re-asserts the tokens
+   so any component forcing light tokens stays consistent. */
+.dark {
+  --shadow-color: 260 50% 3%;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family:
+      "Inter",
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      "Segoe UI",
+      sans-serif;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  button:not([disabled]),
+  [role="button"]:not([disabled]) {
+    cursor: pointer;
+  }
+  ::selection {
+    background: color-mix(in oklch, var(--primary) 22%, transparent);
+  }
+}
+
+@layer utilities {
+  /* Quiet layered card used across the app */
+  .surface {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow:
+      0 1px 2px hsl(var(--shadow-color) / 0.05),
+      0 8px 24px -12px hsl(var(--shadow-color) / 0.12);
+  }
+  .surface-hover {
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+  .surface-hover:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 2px 4px hsl(var(--shadow-color) / 0.06),
+      0 16px 32px -12px hsl(var(--shadow-color) / 0.18);
+  }
+  /* The opaque paper sheet every interior style is layered over. */
+  :root {
+    --paper-sheet: linear-gradient(to bottom, oklch(1 0 0), var(--paper));
+  }
+  .dark {
+    --paper-sheet: linear-gradient(to bottom, var(--paper), var(--paper-edge));
+  }
+  /* Diary paper page */
+  .paper {
+    background:
+      linear-gradient(to bottom, oklch(1 0 0), var(--paper));
+    color: var(--ink);
+  }
+  .dark .paper {
+    background: linear-gradient(to bottom, var(--paper), var(--paper-edge));
+  }
+  .paper-lines {
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 31px,
+      color-mix(in oklch, var(--ink) 10%, transparent) 31px,
+      color-mix(in oklch, var(--ink) 10%, transparent) 32px
+    );
+  }
+  /* Technical metadata labels — Local Diary Core signature */
+  .meta-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted-foreground);
+  }
+  /* Faint engineering grid backdrop for hero/admin sections */
+  .grid-backdrop {
+    background-image:
+      linear-gradient(to right, hsl(var(--shadow-color) / 0.28) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--shadow-color) / 0.28) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: radial-gradient(75% 70% at 50% 20%, black 30%, transparent 100%);
+  }
+  /* Pencil-line divider, per the book metaphor */
+  .rule-pencil {
+    border-top: 1px solid hsl(var(--shadow-color) / 0.35);
+  }
+  /* ---- Interior page styles (chosen per book) ----------------------------
+     Each pattern is declared three ways: on its own class (picker swatches
+     and editor previews), paired with `.paper`, and paired with `.dark
+     .paper` — that last pairing outranks the sheet's `background` shorthand,
+     which otherwise wipes the pattern. Every rule layers the pattern ON TOP
+     of the opaque paper gradient (`--paper-sheet`) rather than replacing it:
+     a pattern-only rule leaves the sheet transparent, and a transparent page
+     over the dark app background is exactly why these styles used to look
+     like nothing at all.
+     `background-origin: border-box` anchors the ruling to the sheet edge so
+     the 32px rhythm sits under the 32px (leading-8) body text. */
+  /* Classic ruled paper (the original diary look) */
+  .page-lined,
+  .paper.page-lined,
+  .dark .paper.page-lined {
+    background-image:
+      repeating-linear-gradient(
+        to bottom,
+        transparent 0 31px,
+        color-mix(in oklch, var(--ink) 20%, transparent) 31px 32px
+      ),
+      var(--paper-sheet);
+    background-origin: border-box;
+  }
+  /* Bullet-journal dot grid */
+  .page-dotted,
+  .paper.page-dotted,
+  .dark .paper.page-dotted {
+    background-image:
+      radial-gradient(
+        color-mix(in oklch, var(--ink) 34%, transparent) 1.2px,
+        transparent 1.3px
+      ),
+      var(--paper-sheet);
+    background-size: 24px 24px, 100% 100%;
+    background-origin: border-box;
+  }
+  /* Graph/engineering grid */
+  .page-grid,
+  .paper.page-grid,
+  .dark .paper.page-grid {
+    background-image:
+      linear-gradient(to right, color-mix(in oklch, var(--ink) 16%, transparent) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in oklch, var(--ink) 16%, transparent) 1px, transparent 1px),
+      var(--paper-sheet);
+    background-size: 28px 28px, 28px 28px, 100% 100%;
+    background-origin: border-box;
+  }
+  /* Clean unruled sheet */
+  .page-blank,
+  .paper.page-blank,
+  .dark .paper.page-blank {
+    background-image: var(--paper-sheet);
+  }
+  /* Aged parchment: warm tone, faint ruling and fibre mottling */
+  .page-vintage,
+  .paper.page-vintage,
+  .dark .paper.page-vintage {
+    background-image:
+      repeating-linear-gradient(
+        to bottom,
+        transparent 0 31px,
+        color-mix(in oklch, var(--ink) 9%, transparent) 31px 32px
+      ),
+      radial-gradient(ellipse 60% 45% at 18% 8%, rgb(0 0 0 / 0.05), transparent 70%),
+      radial-gradient(ellipse 55% 40% at 85% 92%, rgb(0 0 0 / 0.055), transparent 70%),
+      linear-gradient(
+        to bottom,
+        color-mix(in oklch, var(--paper) 62%, oklch(0.83 0.07 85)),
+        color-mix(in oklch, var(--paper) 70%, oklch(0.78 0.08 85))
+      );
+    background-origin: border-box;
+  }
+  /* The user's own page image: the picture is applied inline (it is a data
+     URL) on top of this paper base, so a missing image still reads as paper. */
+  .page-custom,
+  .paper.page-custom,
+  .dark .paper.page-custom {
+    background-image: var(--paper-sheet);
+  }
+  /* The user's own page image.
+     It must live on a child element, never as an inline style on the page
+     sheet itself: page-flip's HTML renderer calls `simpleDraw()`, which
+     reassigns `element.style.cssText` on the page element to position it and
+     silently wipes every inline declaration — background images included.
+     That is why an uploaded paper showed up in print but never in the book.
+     The image data URL is still applied inline (it is per-book state), just
+     one level down where the flip engine never touches it. */
+  .page-image-layer {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+  /* Readability veil laid over a custom page image so writing stays legible.
+     Kept light enough that the uploaded paper is clearly recognisable — the
+     earlier 84% wash hid the picture the user had chosen. */
+  .page-image-veil {
+    background: color-mix(in oklch, var(--paper) 55%, transparent);
+  }
+  /* Stitched binding down the gutter of an open spread. It only appears when
+     two pages face each other, and it is what tells the eye which half of the
+     screen is the left page and which is the right one.
+     Ink percentages are tuned for legibility at small sheet sizes — on short
+     laptop windows the whole book shrinks to ~400px tall, and a too-faint
+     thread simply vanished. */
+  .book-spine {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 34px;
+    transform: translateX(-50%);
+    pointer-events: none;
+    z-index: 20;
+    background: linear-gradient(
+      to right,
+      transparent 0%,
+      color-mix(in oklch, var(--ink) 9%, transparent) 36%,
+      color-mix(in oklch, var(--ink) 20%, transparent) 50%,
+      color-mix(in oklch, var(--ink) 9%, transparent) 64%,
+      transparent 100%
+    );
+  }
+  /* The thread itself: a fine dashed line down the gutter... */
+  .book-spine::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 2px;
+    transform: translateX(-50%);
+    background: repeating-linear-gradient(
+      to bottom,
+      color-mix(in oklch, var(--ink) 52%, transparent) 0 9px,
+      transparent 9px 15px
+    );
+  }
+  /* ...and the stitches that cross it, so it reads as a sewn binding. */
+  .book-spine::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 14px;
+    transform: translateX(-50%);
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0 34px,
+      color-mix(in oklch, var(--ink) 34%, transparent) 34px 36px
+    );
+  }
+  /* Soft entrance animations */
+  .animate-rise {
+    animation: rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .animate-rise,
+    .animate-fade {
+      animation: none;
+    }
+    * {
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+    }
+  }
+
+  /* Rich-text typography for diary editor and reader surfaces */
+  .diary-content h1 {
+    font-size: 1.85rem;
+    font-weight: 700;
+    line-height: 1.25;
+    margin: 1.2rem 0 0.5rem;
+    color: var(--ink);
+  }
+  .diary-content h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.3;
+    margin: 1rem 0 0.45rem;
+    color: var(--ink);
+  }
+  .diary-content h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1.35;
+    margin: 0.85rem 0 0.4rem;
+    color: var(--ink);
+  }
+  .diary-content h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    line-height: 1.4;
+    margin: 0.75rem 0 0.35rem;
+    color: var(--ink);
+  }
+  .diary-content h5 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0.65rem 0 0.3rem;
+    color: var(--ink);
+  }
+  .diary-content p {
+    margin: 0 0 0.75rem;
+  }
+  .diary-content blockquote {
+    margin: 0.8rem 0;
+    padding: 0.4rem 0 0.4rem 1.1rem;
+    border-left: 3px solid var(--primary);
+    font-style: italic;
+    color: color-mix(in oklch, var(--ink) 85%, transparent);
+    background: color-mix(in oklch, var(--primary) 6%, transparent);
+    border-radius: 0 6px 6px 0;
+  }
+  .diary-content ul {
+    list-style-type: disc;
+    padding-left: 1.5rem;
+    margin: 0 0 0.75rem;
+  }
+  .diary-content ul[data-list-style="disc"] {
+    list-style-type: disc;
+  }
+  .diary-content ul[data-list-style="circle"] {
+    list-style-type: circle;
+  }
+  .diary-content ul[data-list-style="square"] {
+    list-style-type: square;
+  }
+  .diary-content ol {
+    list-style-type: decimal;
+    padding-left: 1.5rem;
+    margin: 0 0 0.75rem;
+  }
+  .diary-content ol[type="1"] {
+    list-style-type: decimal;
+  }
+  .diary-content ol[type="A"] {
+    list-style-type: upper-alpha;
+  }
+  .diary-content ol[type="a"] {
+    list-style-type: lower-alpha;
+  }
+  .diary-content ol[type="I"] {
+    list-style-type: upper-roman;
+  }
+  .diary-content ol[type="i"] {
+    list-style-type: lower-roman;
+  }
+  .diary-content ul.diary-checklist {
+    list-style-type: none !important;
+    padding-left: 0.25rem;
+    margin: 0 0 0.75rem;
+  }
+  .diary-content ul.diary-checklist li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-bottom: 0.35rem;
+  }
+  .diary-content ul.diary-checklist li[data-checked="true"] {
+    text-decoration: line-through;
+    opacity: 0.65;
+  }
+  .diary-content ul.diary-checklist input[type="checkbox"] {
+    margin-top: 0.45rem;
+    cursor: pointer;
+    accent-color: var(--primary);
+    width: 15px;
+    height: 15px;
+  }
+  .diary-content a {
+    color: var(--primary);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+  }
+  .diary-content a:hover {
+    opacity: 0.8;
+  }
+  .diary-content b,
+  .diary-content strong {
+    font-weight: 700;
+  }
+  .diary-content i,
+  .diary-content em {
+    font-style: italic;
+  }
+  .diary-content u {
+    text-decoration: underline;
+  }
+  .diary-content s,
+  .diary-content del,
+  .diary-content strike {
+    text-decoration: line-through;
+  }
+}
