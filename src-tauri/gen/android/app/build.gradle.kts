@@ -11,8 +11,8 @@ android {
         applicationId = "com.mydiary.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 2
-        versionName = "1.1.0"
+        versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 2
+        versionName = System.getenv("VERSION_NAME") ?: "1.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         ndk {
@@ -27,11 +27,15 @@ android {
             val keyAlias = System.getenv("KEY_ALIAS")
             val keyPassword = System.getenv("KEY_PASSWORD")
 
-            if (!keystorePath.isNullOrEmpty() && file(keystorePath).exists()) {
-                storeFile = file(keystorePath)
-                storePassword = keystorePassword
-                this.keyAlias = keyAlias
-                this.keyPassword = keyPassword
+            if (!keystorePath.isNullOrEmpty()) {
+                val candidate = file(keystorePath)
+                val resolved = if (candidate.isAbsolute) candidate else if (candidate.exists()) candidate else rootProject.file(keystorePath)
+                if (resolved.exists()) {
+                    storeFile = resolved
+                    storePassword = keystorePassword
+                    this.keyAlias = keyAlias
+                    this.keyPassword = keyPassword
+                }
             }
         }
     }
@@ -43,8 +47,11 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = if (System.getenv("KEYSTORE_PATH") != null) {
-                signingConfigs.getByName("release")
+            val releaseConfig = signingConfigs.getByName("release")
+            signingConfig = if (releaseConfig.storeFile != null && releaseConfig.storeFile!!.exists()) {
+                releaseConfig
+            } else if (System.getenv("CI") == "true") {
+                throw GradleException("Production release build in CI requires a valid signing keystore. KEYSTORE_PATH was not provided or keystore file was not found.")
             } else {
                 signingConfigs.getByName("debug")
             }

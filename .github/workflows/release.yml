@@ -1,0 +1,229 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (e.g. v1.1.0)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  # ============================================================================
+  # 1. WINDOWS DESKTOP BUILD & RELEASE CREATION
+  # ============================================================================
+  build-windows:
+    name: Build Windows (x64)
+    runs-on: windows-latest
+    outputs:
+      tag: ${{ steps.tag_info.outputs.tag }}
+      version: ${{ steps.tag_info.outputs.version }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Resolve Release Tag and Version
+        id: tag_info
+        shell: pwsh
+        run: |
+          $inputTag = "${{ inputs.tag }}"
+          if ($inputTag -and $inputTag.Trim() -ne "") {
+            $tag = $inputTag.Trim()
+          } elseif ($env:GITHUB_REF -like "refs/tags/*") {
+            $tag = $env:GITHUB_REF.Substring(10)
+          } else {
+            $pkgJson = Get-Content -Raw -Path package.json | ConvertFrom-Json
+            $tag = "v" + $pkgJson.version
+          }
+          $version = if ($tag.StartsWith("v")) { $tag.Substring(1) } else { $tag }
+          Write-Host "Resolved Tag: $tag, Version: $version"
+          "tag=$tag" >> $env:GITHUB_OUTPUT
+          "version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build frontend
+        run: bun run build
+
+      - name: Validate Tauri Updater Signing Key
+        shell: pwsh
+        run: |
+          if (-not $env:TAURI_SIGNING_PRIVATE_KEY -or $env:TAURI_SIGNING_PRIVATE_KEY.Trim() -eq "") {
+            Write-Error "CRITICAL: TAURI_SIGNING_PRIVATE_KEY secret is missing! Production releases require this key to sign the updater payload and generate latest.json."
+            exit 1
+          }
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+
+      - name: Build and Package Windows Tauri App
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tagName: ${{ steps.tag_info.outputs.tag }}
+          releaseName: "Local Diary Core ${{ steps.tag_info.outputs.tag }}"
+          releaseBody: "Official production release of Local Diary Core."
+          releaseDraft: false
+          prerelease: false
+          args: --bundles nsis
+
+  # ============================================================================
+  # 2. ANDROID APK & AAB BUILD
+  # ============================================================================
+  build-android:
+    name: Build Android (APK & AAB)
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version_info.outputs.version }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Resolve Release Tag and Version
+        id: version_info
+        run: |
+          INPUT_TAG="${{ inputs.tag }}"
+          if [ -n "$INPUT_TAG" ]; then
+            TAG="$INPUT_TAG"
+          elif [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            TAG="${GITHUB_REF#refs/tags/}"
+          else
+            TAG="v$(node -p "require('./package.json').version")"
+          fi
+          VERSION="${TAG#v}"
+          echo "Resolved Tag: $TAG, Version: $VERSION"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies & Build Frontend
+        run: |
+          bun install --frozen-lockfile
+          bun run build
+
+      - name: Copy Frontend Assets to Android
+        run: |
+          mkdir -p src-tauri/gen/android/app/src/main/assets
+          cp -r dist/* src-tauri/gen/android/app/src/main/assets/
+
+      - name: Validate and Decode Android Keystore
+        run: |
+          if [ -z "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
+            echo "::error::ANDROID_KEYSTORE_BASE64 secret is missing! Production release builds must be signed with a production keystore and cannot use debug signing."
+            exit 1
+          fi
+          if [ -z "${{ secrets.KEYSTORE_PASSWORD }}" ] || [ -z "${{ secrets.KEY_ALIAS }}" ] || [ -z "${{ secrets.KEY_PASSWORD }}" ]; then
+            echo "::error::One or more keystore credential secrets (KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD) are missing!"
+            exit 1
+          fi
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > src-tauri/gen/android/app/upload-key.jks
+          echo "KEYSTORE_PATH=upload-key.jks" >> $GITHUB_ENV
+          echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
+          echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> $GITHUB_ENV
+          echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> $GITHUB_ENV
+
+      - name: Build Android Release APK and AAB
+        env:
+          VERSION_NAME: ${{ steps.version_info.outputs.version }}
+          CI: "true"
+        run: |
+          cd src-tauri/gen/android
+          chmod +x gradlew
+          ./gradlew assembleRelease
+          ./gradlew bundleRelease
+
+      - name: Cleanup Ephemeral Keystore
+        if: always()
+        run: |
+          rm -f src-tauri/gen/android/app/upload-key.jks
+
+      - name: Prepare Named Android Release Artifacts
+        run: |
+          mkdir -p release-artifacts
+          VERSION="${{ steps.version_info.outputs.version }}"
+
+          # Verify and copy signed Release APK
+          if [ -f src-tauri/gen/android/app/build/outputs/apk/release/app-release.apk ]; then
+            cp src-tauri/gen/android/app/build/outputs/apk/release/app-release.apk "release-artifacts/LocalDiaryCore_${VERSION}.apk"
+          else
+            echo "::error::Signed release APK not found at app-release.apk! Production release build did not produce a signed APK."
+            exit 1
+          fi
+
+          # Verify and copy signed Release AAB
+          if [ -f src-tauri/gen/android/app/build/outputs/bundle/release/app-release.aab ]; then
+            cp src-tauri/gen/android/app/build/outputs/bundle/release/app-release.aab "release-artifacts/LocalDiaryCore_${VERSION}.aab"
+          else
+            echo "::error::Signed release AAB not found at app-release.aab! Production release build did not produce a signed AAB."
+            exit 1
+          fi
+
+      - name: Upload Android Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-release-artifacts
+          path: release-artifacts/*
+          retention-days: 14
+
+  # ============================================================================
+  # 3. ATTACH ANDROID ARTIFACTS TO GITHUB RELEASE
+  # ============================================================================
+  attach-android-release:
+    name: Attach Android Artifacts to Release
+    needs: [build-windows, build-android]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Android Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: android-release-artifacts
+          path: release-artifacts
+
+      - name: Attach Artifacts to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.build-windows.outputs.tag }}
+          files: |
+            release-artifacts/*.apk
+            release-artifacts/*.aab
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
