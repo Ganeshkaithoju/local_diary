@@ -162,15 +162,46 @@ jobs:
           echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> $GITHUB_ENV
           echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> $GITHUB_ENV
 
+      # - name: Build Android Release APK and AAB
+      #   env:
+      #     VERSION_NAME: ${{ steps.version_info.outputs.version }}
+      #     CI: "true"
+      #   run: |
+      #     cd src-tauri/gen/android
+      #     chmod +x gradlew
+      #     ./gradlew assembleRelease
+      #     ./gradlew bundleRelease
+
       - name: Build Android Release APK and AAB
         env:
           VERSION_NAME: ${{ steps.version_info.outputs.version }}
           CI: "true"
         run: |
           cd src-tauri/gen/android
+
+          echo "=== Gradle wrapper diagnostics ==="
+          pwd
+          ls -la
+          ls -la gradle/wrapper
+          file gradlew
+          file gradle/wrapper/gradle-wrapper.jar
+          ls -lh gradle/wrapper/gradle-wrapper.jar
+
+          echo "=== Gradle wrapper JAR contents ==="
+          jar tf gradle/wrapper/gradle-wrapper.jar | grep "GradleWrapperMain"
+
+          echo "=== Wrapper permissions ==="
           chmod +x gradlew
-          ./gradlew assembleRelease
-          ./gradlew bundleRelease
+          ls -l gradlew
+
+          echo "=== Gradle version ==="
+          ./gradlew --version
+
+          echo "=== Build APK ==="
+          ./gradlew assembleRelease --stacktrace
+
+          echo "=== Build AAB ==="
+          ./gradlew bundleRelease --stacktrace
 
       - name: Cleanup Ephemeral Keystore
         if: always()
