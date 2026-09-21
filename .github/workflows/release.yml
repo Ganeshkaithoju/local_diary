@@ -311,12 +311,12 @@ jobs:
           name: android-release-artifacts
           path: release-artifacts
 
-      - name: Attach Artifacts to GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ needs.build-windows.outputs.tag }}
-          files: |
-            release-artifacts/*.apk
-            release-artifacts/*.aab
+      - name: Attach Android Artifacts to GitHub Release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ needs.build-windows.outputs.tag }}
+        run: |
+          gh release upload "$RELEASE_TAG" \
+            release-artifacts/*.apk \
+            release-artifacts/*.aab \
+            --clobber
