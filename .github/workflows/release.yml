@@ -65,8 +65,51 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Validate frontend environment
+        shell: pwsh
+        env:
+          VITE_CONVEX_URL: ${{ vars.VITE_CONVEX_URL }}
+          VITE_VLY_APP_ID: ${{ vars.VITE_VLY_APP_ID }}
+          VITE_VLY_MONITORING_URL: ${{ vars.VITE_VLY_MONITORING_URL }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:VITE_CONVEX_URL)) {
+            Write-Error "CRITICAL: VITE_CONVEX_URL is missing. Production frontend cannot be built."
+            exit 1
+          }
+
+          if ([string]::IsNullOrWhiteSpace($env:VITE_VLY_APP_ID)) {
+            Write-Error "CRITICAL: VITE_VLY_APP_ID is missing."
+            exit 1
+          }
+
+          if ([string]::IsNullOrWhiteSpace($env:VITE_VLY_MONITORING_URL)) {
+            Write-Error "CRITICAL: VITE_VLY_MONITORING_URL is missing."
+            exit 1
+          }
+
+          Write-Host "Frontend environment validation passed."
+
       - name: Build frontend
+        env:
+          VITE_CONVEX_URL: ${{ vars.VITE_CONVEX_URL }}
+          VITE_VLY_APP_ID: ${{ vars.VITE_VLY_APP_ID }}
+          VITE_VLY_MONITORING_URL: ${{ vars.VITE_VLY_MONITORING_URL }}
         run: bun run build
+
+      - name: Verify production frontend configuration
+        shell: pwsh
+        env:
+          VITE_CONVEX_URL: ${{ vars.VITE_CONVEX_URL }}
+        run: |
+          $matches = Get-ChildItem -Path dist -Recurse -File |
+            Select-String -SimpleMatch $env:VITE_CONVEX_URL -Quiet
+
+          if (-not $matches) {
+            Write-Error "CRITICAL: VITE_CONVEX_URL was not found in the production frontend bundle."
+            exit 1
+          }
+
+          Write-Host "Production frontend contains the configured Convex URL."
 
       - name: Validate Tauri Updater Signing Key
         shell: pwsh
@@ -136,10 +179,48 @@ jobs:
         with:
           bun-version: latest
 
+      - name: Validate frontend environment
+        env:
+          VITE_CONVEX_URL: ${{ vars.VITE_CONVEX_URL }}
+          VITE_VLY_APP_ID: ${{ vars.VITE_VLY_APP_ID }}
+          VITE_VLY_MONITORING_URL: ${{ vars.VITE_VLY_MONITORING_URL }}
+        run: |
+          test -n "$VITE_CONVEX_URL" || {
+            echo "::error::CRITICAL: VITE_CONVEX_URL is missing."
+            exit 1
+          }
+
+          test -n "$VITE_VLY_APP_ID" || {
+            echo "::error::CRITICAL: VITE_VLY_APP_ID is missing."
+            exit 1
+          }
+
+          test -n "$VITE_VLY_MONITORING_URL" || {
+            echo "::error::CRITICAL: VITE_VLY_MONITORING_URL is missing."
+            exit 1
+          }
+
+          echo "Frontend environment validation passed."
+
       - name: Install dependencies & Build Frontend
+        env:
+          VITE_CONVEX_URL: ${{ vars.VITE_CONVEX_URL }}
+          VITE_VLY_APP_ID: ${{ vars.VITE_VLY_APP_ID }}
+          VITE_VLY_MONITORING_URL: ${{ vars.VITE_VLY_MONITORING_URL }}
         run: |
           bun install --frozen-lockfile
           bun run build
+
+      - name: Verify production frontend configuration
+        env:
+          VITE_CONVEX_URL: ${{ vars.VITE_CONVEX_URL }}
+        run: |
+          if ! grep -R -F -- "$VITE_CONVEX_URL" dist >/dev/null 2>&1; then
+            echo "::error::CRITICAL: VITE_CONVEX_URL was not found in the production frontend bundle."
+            exit 1
+          fi
+
+          echo "Production frontend contains the configured Convex URL."
 
       - name: Copy Frontend Assets to Android
         run: |
