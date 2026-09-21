@@ -28,6 +28,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
 
       - name: Resolve Release Tag and Version
         id: tag_info
@@ -69,21 +71,9 @@ jobs:
         shell: pwsh
         env:
           VITE_CONVEX_URL: ${{ vars.VITE_CONVEX_URL }}
-          VITE_VLY_APP_ID: ${{ vars.VITE_VLY_APP_ID }}
-          VITE_VLY_MONITORING_URL: ${{ vars.VITE_VLY_MONITORING_URL }}
         run: |
           if ([string]::IsNullOrWhiteSpace($env:VITE_CONVEX_URL)) {
             Write-Error "CRITICAL: VITE_CONVEX_URL is missing. Production frontend cannot be built."
-            exit 1
-          }
-
-          if ([string]::IsNullOrWhiteSpace($env:VITE_VLY_APP_ID)) {
-            Write-Error "CRITICAL: VITE_VLY_APP_ID is missing."
-            exit 1
-          }
-
-          if ([string]::IsNullOrWhiteSpace($env:VITE_VLY_MONITORING_URL)) {
-            Write-Error "CRITICAL: VITE_VLY_MONITORING_URL is missing."
             exit 1
           }
 
@@ -147,6 +137,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
 
       - name: Resolve Release Tag and Version
         id: version_info
@@ -182,21 +174,9 @@ jobs:
       - name: Validate frontend environment
         env:
           VITE_CONVEX_URL: ${{ vars.VITE_CONVEX_URL }}
-          VITE_VLY_APP_ID: ${{ vars.VITE_VLY_APP_ID }}
-          VITE_VLY_MONITORING_URL: ${{ vars.VITE_VLY_MONITORING_URL }}
         run: |
           test -n "$VITE_CONVEX_URL" || {
             echo "::error::CRITICAL: VITE_CONVEX_URL is missing."
-            exit 1
-          }
-
-          test -n "$VITE_VLY_APP_ID" || {
-            echo "::error::CRITICAL: VITE_VLY_APP_ID is missing."
-            exit 1
-          }
-
-          test -n "$VITE_VLY_MONITORING_URL" || {
-            echo "::error::CRITICAL: VITE_VLY_MONITORING_URL is missing."
             exit 1
           }
 
