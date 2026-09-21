@@ -53,7 +53,7 @@
   "plugins": {
     "opener": {},
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDk4RjgxMDc4NDQ2NkRGQzkKUldUSjMyWkVlQkQ0bUFnZjVBUk5UNnJ4R1Vob2p5ZnhrRnE0WkdJY1VCWDJhaWJ5Wk5od2E5MFEK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDQ1NTkyNjM0NTMzQzlGMTIKUldRU256eFROQ1paUmZoeURTanZJWGZ4TC9vTU9kZzQzQkcvQ25jdXhDRU54MDJWdTVaQUVzVE8K",
       "endpoints": [
         "https://github.com/Ganeshkaithoju/local_diary/releases/latest/download/latest.json",
         "https://github.com/Ganeshkaithoju/local-diary-core/releases/latest/download/latest.json"
